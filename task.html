@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Тестовое задание</title>
+    <script src="lab.js"></script>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script type="text/javascript">
+
+var mouse = {
+    x : 0,
+    y : 0,
+};
+
+// Выбранный объект
+var selected = false;
+var flVectr = false;
+
+var cnv = document.getElementById('canvas');
+var ctx = cnv.getContext('2d');
+var width = 500, height = 700;
+
+cnv.width = width;
+cnv.height = height;
+//cnv.style.backgroundColor = '#D9FF9E';
+
+
+// Класс прямоугольник
+var Rect = function (x, y, w, h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+};
+Rect.prototype.draw = function () {
+    ctx.fillStyle = '#F4F4F4';
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+};
+Rect.prototype.stroke = function () {
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(this.x, this.y, this.w, this.h);
+};
+Rect.prototype.isCursorInRect = function () {
+    return mouse.x > this.x && mouse.x < this.x + this.w && mouse.y > this.y && mouse.y < this.y + this.h;
+};
+Rect.prototype.isCircleInRect = function (circle) {
+    return circle.x > this.x + circle.radius && circle.x < this.x + this.w -circle.radius && circle.y > this.y +circle.radius && circle.y < this.y + this.h - circle.radius;
+};
+
+// объект поле для движения
+var fildDrive = new Rect(0, 200, 500, 500);
+
+
+// Класс окружность
+var Circle = function (x, y, radius, color) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    // this.color = color;
+    this.color = '#985D5D';
+};
+Circle.prototype.draw = function () {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI, false);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+};
+Circle.prototype.stroke = function () {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI, false);
+    ctx.strokeStyle = '#001EFF';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+};
+Circle.prototype.drawVectr = function () {
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(mouse.x, mouse.y);
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+};
+Circle.prototype.isCursorInCircle = function () {
+    var distanceFromCenter = Math.sqrt(Math.pow(this.x - mouse.x, 2) + Math.pow(this.y - mouse.y, 2))
+    return distanceFromCenter < this.radius;
+};
+
+// создание массива изаполнение объектов окружносей для выбора
+var i, circleChange = [];
+for (i = 0; i < 4; i++) {
+    circleChange.push( new Circle(50 + i * (50 + 20), 50, 30, 50) );
+}
+
+// создание массива объектов окружносей для движения
+var circleDrive = [];
+
+// Рабочии цикл
+setInterval(function () {
+    // Очистка
+    ctx.clearRect(0, 0, width, height);
+
+    // отрисовка поля для движения
+    fildDrive.draw();
+    fildDrive.stroke();
+
+    // Прорисовка окружностей для выбора
+    for (i in circleChange) {
+        circleChange[i].draw();
+
+        if (circleChange[i].isCursorInCircle()) {
+            circleChange[i].stroke();
+        }
+
+    }
+
+    // прорисовка движущихся окружностей
+    for (i in circleDrive) {
+        circleDrive[i].draw();
+    }
+
+    // прорисовка претаскиваемой окружности
+    if (selected) {
+        selected.draw();
+        selected.stroke();
+        selected.x = mouse.x;
+        selected.y = mouse.y;
+    } else if(circleDrive.length > 0 && flVectr) {
+        circleDrive[circleDrive.length - 1].drawVectr();
+    }
+
+}, 30);
+
+// обработчик движения курсора мыши
+window.onmousemove = function (e) {
+    mouse.x = e.pageX;
+    mouse.y = e.pageY;
+};
+
+// обработчик нажатия мыши
+window.onmousedown = function () {
+    if (!selected) {
+        var i;
+
+        for (i in circleChange) {
+            if (circleChange[i].isCursorInCircle()) {
+                selected = new Circle(circleChange[i].x, circleChange[i].y, circleChange[i].radius, circleChange[i].color);
+            }
+        }
+
+        flVectr = false;
+    }
+};
+
+// обработчик отпускания мыши
+window.onmouseup = function () {
+    if (selected) {
+        if(fildDrive.isCircleInRect(selected)) {
+            circleDrive.push(selected);
+            flVectr = true;
+        }
+        selected = false;
+    }
+    
+};
+</script>
+
+</body>
+</html>
