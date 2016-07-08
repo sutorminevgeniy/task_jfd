@@ -63,6 +63,9 @@ var Circle = function (x, y, radius, color) {
     this.radius = radius;
     // this.color = color;
     this.color = '#985D5D';
+    this.vx = 0;
+    this.vy = 0;
+    this.vl = 0;
 };
 Circle.prototype.draw = function () {
     ctx.beginPath();
@@ -85,8 +88,12 @@ Circle.prototype.drawVectr = function () {
     ctx.stroke();
 };
 Circle.prototype.isCursorInCircle = function () {
-    var distanceFromCenter = Math.sqrt(Math.pow(this.x - mouse.x, 2) + Math.pow(this.y - mouse.y, 2))
+    var distanceFromCenter = Math.sqrt(Math.pow(this.x - mouse.x, 2) + Math.pow(this.y - mouse.y, 2));
     return distanceFromCenter < this.radius;
+};
+Circle.prototype.step = function () {
+    this.x += (this.vx * 0.003);
+    this.y += (this.vy * 0.003);
 };
 
 // создание массива изаполнение объектов окружносей для выбора
@@ -120,7 +127,9 @@ setInterval(function () {
     // прорисовка движущихся окружностей
     for (i in circleDrive) {
         circleDrive[i].draw();
+        circleDrive[i].step();
     }
+
 
     // прорисовка претаскиваемой окружности
     if (selected) {
@@ -150,7 +159,15 @@ window.onmousedown = function () {
                 selected = new Circle(circleChange[i].x, circleChange[i].y, circleChange[i].radius, circleChange[i].color);
             }
         }
+        
+    }
 
+    var lastCircleDrive = circleDrive[circleDrive.length - 1]
+    if (flVectr) {
+
+        lastCircleDrive.vx = mouse.x - lastCircleDrive.x;
+        lastCircleDrive.vy = mouse.y - lastCircleDrive.y;
+        lastCircleDrive.vl = Math.sqrt(Math.pow(lastCircleDrive.vx, 2) + Math.pow(lastCircleDrive.vy, 2));
         flVectr = false;
     }
 };
