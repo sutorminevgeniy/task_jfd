@@ -92,8 +92,12 @@ Circle.prototype.isCursorInCircle = function () {
     return distanceFromCenter < this.radius;
 };
 Circle.prototype.step = function () {
-    this.x += (this.vx * 0.003);
-    this.y += (this.vy * 0.003);
+    this.x += (this.vx * 0.006);
+    this.y += (this.vy * 0.006);
+};
+Circle.prototype.checkWall = function (rect) {
+    if(this.x <= (rect.x + this.radius) || this.x >= (rect.x + rect.w - this.radius)) this.vx = -this.vx;
+    if(this.y <= (rect.y + this.radius) || this.y >= (rect.y + rect.h - this.radius)) this.vy = -this.vy;
 };
 
 // создание массива изаполнение объектов окружносей для выбора
@@ -121,13 +125,13 @@ setInterval(function () {
         if (circleChange[i].isCursorInCircle()) {
             circleChange[i].stroke();
         }
-
     }
 
     // прорисовка движущихся окружностей
     for (i in circleDrive) {
         circleDrive[i].draw();
         circleDrive[i].step();
+        circleDrive[i].checkWall(fildDrive);
     }
 
 
