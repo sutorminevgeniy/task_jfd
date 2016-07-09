@@ -66,6 +66,7 @@ var Circle = function (x, y, radius, color) {
     this.vx = 0;
     this.vy = 0;
     this.vl = 0;
+    this.m = 1;
 };
 Circle.prototype.draw = function () {
     ctx.beginPath();
@@ -92,12 +93,20 @@ Circle.prototype.isCursorInCircle = function () {
     return distanceFromCenter < this.radius;
 };
 Circle.prototype.step = function () {
-    this.x += (this.vx * 0.006);
-    this.y += (this.vy * 0.006);
+    this.x += (this.vx * 0.01);
+    this.y += (this.vy * 0.01);
 };
 Circle.prototype.checkWall = function (rect) {
     if(this.x <= (rect.x + this.radius) || this.x >= (rect.x + rect.w - this.radius)) this.vx = -this.vx;
     if(this.y <= (rect.y + this.radius) || this.y >= (rect.y + rect.h - this.radius)) this.vy = -this.vy;
+};
+Circle.prototype.checkCircle = function (circle) {
+    if ( Math.sqrt(Math.pow(this.x - circle.x, 2) + Math.pow(this.y - circle.y, 2)) <= (this.radius + circle.radius) ) {
+        this.vx = -this.vx;
+        this.vy = -this.vy;
+        circle.vx = -circle.vx;
+        circle.vy = -circle.vy;
+    }
 };
 
 // создание массива изаполнение объектов окружносей для выбора
@@ -111,6 +120,8 @@ var circleDrive = [];
 
 // Рабочии цикл
 setInterval(function () {
+    var i, j;
+
     // Очистка
     ctx.clearRect(0, 0, width, height);
 
@@ -131,7 +142,14 @@ setInterval(function () {
     for (i in circleDrive) {
         circleDrive[i].draw();
         circleDrive[i].step();
-        circleDrive[i].checkWall(fildDrive);
+        circleDrive[i].checkWall(fildDrive); // проверка удара о стену
+    }
+    // проверка на соодарение шариков
+    for(i = 0; i < (circleDrive.length - 1); i++) {
+        for(j=i+1; j < circleDrive.length; j++) {
+            //console.log(i + " x " + j);
+            circleDrive[i].checkCircle(circleDrive[j]);
+        }
     }
 
 
@@ -163,7 +181,6 @@ window.onmousedown = function () {
                 selected = new Circle(circleChange[i].x, circleChange[i].y, circleChange[i].radius, circleChange[i].color);
             }
         }
-        
     }
 
     var lastCircleDrive = circleDrive[circleDrive.length - 1]
