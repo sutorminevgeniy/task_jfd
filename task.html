@@ -23,11 +23,8 @@ var flVectr = false;
 var cnv = document.getElementById('canvas');
 var ctx = cnv.getContext('2d');
 var width = 500, height = 700;
-
 cnv.width = width;
 cnv.height = height;
-//cnv.style.backgroundColor = '#D9FF9E';
-
 
 // Класс прямоугольник
 var Rect = function (x, y, w, h) {
@@ -56,17 +53,17 @@ Rect.prototype.isCircleInRect = function (circle) {
 var fildDrive = new Rect(0, 200, 500, 500);
 
 
+var colors = ['#985D5D', '#00836e', '#2F6C80', '#6C456F', '#456F48', '#84291B']
 // Класс окружность
 var Circle = function (x, y, radius, color) {
     this.x = x;
     this.y = y;
     this.radius = radius;
-    // this.color = color;
-    this.color = '#985D5D';
+    this.color = color;
     this.vx = 0;
     this.vy = 0;
     this.vl = 0;
-    this.m = 1;
+    this.mass = Math.pow(this.radius/40, 3);
 };
 Circle.prototype.draw = function () {
     ctx.beginPath();
@@ -102,17 +99,52 @@ Circle.prototype.checkWall = function (rect) {
 };
 Circle.prototype.checkCircle = function (circle) {
     if ( Math.sqrt(Math.pow(this.x - circle.x, 2) + Math.pow(this.y - circle.y, 2)) <= (this.radius + circle.radius) ) {
-        this.vx = -this.vx;
-        this.vy = -this.vy;
-        circle.vx = -circle.vx;
-        circle.vy = -circle.vy;
+        // задаем переменные массы шаров
+        var mass1 = this.mass;
+        var mass2 = circle.mass;
+        // задаем переменные скорости
+        var xVel1 = this.vx;
+        var xVel2 = circle.vx;
+        var yVel1 = this.vy;
+        var yVel2 = circle.vy;
+        var run = (this.x-circle.x);
+        var rise = (this.y-circle.y);
+        //Угол между осью х и линией действия
+        var Alfa = Math.atan2(rise, run);
+        var cosAlfa = Math.cos(Alfa);
+        var sinAlfa = Math.sin(Alfa);
+        // находим скорости вдоль линии действия
+        var xVel1prime = xVel1*cosAlfa+yVel1*sinAlfa;
+        var xVel2prime = xVel2*cosAlfa+yVel2*sinAlfa;
+        // находим скорости перпендикулярные линии действия
+        var yVel1prime = yVel1*cosAlfa-xVel1*sinAlfa;
+        var yVel2prime = yVel2*cosAlfa-xVel2*sinAlfa;
+        // применяем законы сохранения
+        var P = (mass1*xVel1prime+mass2*xVel2prime);
+        var V = (xVel1prime-xVel2prime);
+        var v2f = (P+mass1*V)/(mass1+mass2);
+        var v1f = v2f-xVel1prime+xVel2prime;
+        xVel1prime = v1f;
+        xVel2prime = v2f;
+        // Проецируем обратно на оси Х и У.
+        xVel1 = xVel1prime*cosAlfa-yVel1prime*sinAlfa;
+        xVel2 = xVel2prime*cosAlfa-yVel2prime*sinAlfa;
+        yVel1 = yVel1prime*cosAlfa+xVel1prime*sinAlfa;
+        yVel2 = yVel2prime*cosAlfa+xVel2prime*sinAlfa;
+        // ставим новые скорости шаров
+        this.vx = xVel1;
+        circle.vx = xVel2;
+        this.vy = yVel1;
+        circle.vy = yVel2;
     }
 };
 
 // создание массива изаполнение объектов окружносей для выбора
-var i, circleChange = [];
-for (i = 0; i < 4; i++) {
-    circleChange.push( new Circle(50 + i * (50 + 20), 50, 30, 50) );
+var i,x = 30, r, circleChange = [];
+for (i = 0; i < 6; i++) {
+    r = 25 + i * 5;
+    circleChange.push( new Circle(x, 60, r, colors[i]) );
+    x += r * 2 + 12;
 }
 
 // создание массива объектов окружносей для движения
@@ -162,7 +194,6 @@ setInterval(function () {
     } else if(circleDrive.length > 0 && flVectr) {
         circleDrive[circleDrive.length - 1].drawVectr();
     }
-
 }, 30);
 
 // обработчик движения курсора мыши
@@ -202,7 +233,6 @@ window.onmouseup = function () {
         }
         selected = false;
     }
-    
 };
 </script>
 
