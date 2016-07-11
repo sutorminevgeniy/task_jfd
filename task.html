@@ -3,11 +3,32 @@
 <head>
     <meta charset="utf-8" />
     <title>Тестовое задание</title>
+
+    <style>
+        a#clearCircle {
+            color: #fff;
+            background-color: #943535;
+            font-size: 20px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 20px 0 30px 175px;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        a#clearCircle:hover {
+            background-color: #DC7A7A;
+        }
+    </style>
+
     <script src="lab.js"></script>
+    <script src="cookie.js"></script>
 </head>
 <body>
 
 <canvas id="canvas"></canvas>
+<br>
+<a href="#" id="clearCircle">Очитстить</a>
+<br>
 
 <script type="text/javascript">
 
@@ -19,6 +40,8 @@ var mouse = {
 // Выбранный объект
 var selected = false;
 var flVectr = false;
+var nameCooks = 'cookShars',
+    cookProp;
 
 var cnv = document.getElementById('canvas');
 var ctx = cnv.getContext('2d');
@@ -48,22 +71,31 @@ Rect.prototype.isCursorInRect = function () {
 Rect.prototype.isCircleInRect = function (circle) {
     return circle.x > this.x + circle.radius && circle.x < this.x + this.w -circle.radius && circle.y > this.y +circle.radius && circle.y < this.y + this.h - circle.radius;
 };
-
 // объект поле для движения
 var fildDrive = new Rect(0, 200, 500, 500);
 
 
 var colors = ['#985D5D', '#00836e', '#2F6C80', '#6C456F', '#456F48', '#84291B']
 // Класс окружность
-var Circle = function (x, y, radius, color) {
+var Circle = function (x, y, radius, color, vx, vy, vl, mass) {
     this.x = x;
     this.y = y;
     this.radius = radius;
     this.color = color;
-    this.vx = 0;
-    this.vy = 0;
-    this.vl = 0;
-    this.mass = Math.pow(this.radius/40, 3);
+    this.vx = vx || 0;
+    this.vy = vy || 0;
+    this.vl = vl || 0;
+    this.mass = mass || Math.pow(this.radius/40, 3);
+};
+Circle.prototype.getProp = function () {
+    return [this.x,
+            this.y,
+            this.radius,
+            this.color,
+            this.vx,
+            this.vy,
+            this.vl,
+            this.mass].join('*');
 };
 Circle.prototype.draw = function () {
     ctx.beginPath();
@@ -149,10 +181,31 @@ for (i = 0; i < 6; i++) {
 
 // создание массива объектов окружносей для движения
 var circleDrive = [];
+if (!navigator.cookieEnabled) {
+  alert( 'Включите cookie для комфортной работы с этим сайтом' );
+}
+cookProp = getCookie(nameCooks);
+if(cookProp) {
+    cookProp = cookProp.split('$');
+    for(i = 0; i < cookProp.length; i++){
+        cookProp[i] = cookProp[i].split('*');
+        circleDrive.push( new Circle(+cookProp[i][0], 
+                                    +cookProp[i][1], 
+                                    +cookProp[i][2], 
+                                    cookProp[i][3], 
+                                    +cookProp[i][4], 
+                                    +cookProp[i][5], 
+                                    +cookProp[i][6], 
+                                    +cookProp[i][7]) );
+    }
+}
+console.log(cookProp);
+console.log(circleDrive);
 
 // Рабочии цикл
 setInterval(function () {
     var i, j;
+    cookProp = [];
 
     // Очистка
     ctx.clearRect(0, 0, width, height);
@@ -171,19 +224,18 @@ setInterval(function () {
     }
 
     // прорисовка движущихся окружностей
-    for (i in circleDrive) {
+    for (i = 0; i < circleDrive.length; i++) {
         circleDrive[i].draw();
         circleDrive[i].step();
         circleDrive[i].checkWall(fildDrive); // проверка удара о стену
-    }
-    // проверка на соодарение шариков
-    for(i = 0; i < (circleDrive.length - 1); i++) {
+        // проверка на соодарение шариков
         for(j=i+1; j < circleDrive.length; j++) {
-            //console.log(i + " x " + j);
             circleDrive[i].checkCircle(circleDrive[j]);
         }
+        cookProp.push(circleDrive[i].getProp());
     }
-
+    cookProp = cookProp.join('$');
+    setCookie(nameCooks, cookProp);
 
     // прорисовка претаскиваемой окружности
     if (selected) {
@@ -234,6 +286,12 @@ window.onmouseup = function () {
         selected = false;
     }
 };
+
+addEvent(document.getElementById('clearCircle'), 'click', function(e){
+    e = e || event;
+    circleDrive = [];
+    removeDefault(e);
+});
 </script>
 
 </body>
