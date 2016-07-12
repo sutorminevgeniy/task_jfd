@@ -40,3 +40,31 @@ function removeDefault(event){
         event.returnValue = false;
     }
 }
+
+
+// Ф-я полифил (обертка) для кроссбпаузерности requestAnimationFrame
+var nexGameStep = (function () {
+    return requestAnimationFrame ||
+    webkitRequestAnimationFrame  ||
+    mozRequestAnimationFrame     ||
+    oRequestAnimationFrame       ||
+    msRequestAnimationFrame      ||
+    function (callback){
+        setTimeout(callback, 1000/60)
+    };
+})();
+// Ф-я игрового процесса (шагов игрового процесса)
+var gameEngineStep = function (callback) {
+    gameEngine();
+    nexGameStep(gameEngineStep);
+};
+// Ф-я инициализация ф-и действии одного шага и запуск процесса
+var gameEngineStart = function (callback) {
+    gameEngine = callback;
+    gameEngineStep();
+};
+// Ф-я инициализация ф-ей действий одного шага
+var setGameEngine = function (callback) {
+    gameEngine = callback;
+};
+

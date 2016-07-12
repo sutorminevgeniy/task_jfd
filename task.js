@@ -49,6 +49,7 @@ var Circle = function (x, y, radius, color, vx, vy, vl, mass) {
     this.vy = vy || 0;
     this.vl = vl || 0;
     this.mass = mass || Math.pow(this.radius/40, 3);
+    this.st = 0;
 };
 Circle.prototype.getProp = function () {
     return [this.x,
@@ -85,15 +86,27 @@ Circle.prototype.isCursorInCircle = function () {
     return distanceFromCenter < this.radius;
 };
 Circle.prototype.step = function () {
-    this.x += (this.vx * 0.01);
-    this.y += (this.vy * 0.01);
+    if(this.st < 2) {
+        this.x += (this.vx * 0.008);
+        this.y += (this.vy * 0.008);
+    } else {
+        console.log(this.st);
+    }
 };
 Circle.prototype.checkWall = function (rect) {
-    if(this.x <= (rect.x + this.radius) || this.x >= (rect.x + rect.w - this.radius)) this.vx = -this.vx;
-    if(this.y <= (rect.y + this.radius) || this.y >= (rect.y + rect.h - this.radius)) this.vy = -this.vy;
+    this.st = 0;
+    if(this.x <= (rect.x + this.radius) || this.x >= (rect.x + rect.w - this.radius)) {
+        this.vx = -this.vx;
+        this.st = 1;
+    }
+    if(this.y <= (rect.y + this.radius) || this.y >= (rect.y + rect.h - this.radius)) {
+        this.vy = -this.vy;
+        this.st = 1;
+    }
 };
 Circle.prototype.checkCircle = function (circle) {
     if ( Math.sqrt(Math.pow(this.x - circle.x, 2) + Math.pow(this.y - circle.y, 2)) <= (this.radius + circle.radius) ) {
+        if(this.st == 1) this.st = 2;
         // задаем переменные массы шаров
         var mass1 = this.mass;
         var mass2 = circle.mass;
@@ -165,11 +178,9 @@ if(cookProp) {
                                     +cookProp[i][7]) );
     }
 }
-console.log(cookProp);
-console.log(circleDrive);
 
 // Рабочии цикл
-setInterval(function () {
+gameEngineStart(function () {
     var i, j;
     cookProp = [];
 
@@ -212,7 +223,7 @@ setInterval(function () {
     } else if(circleDrive.length > 0 && flVectr) {
         circleDrive[circleDrive.length - 1].drawVectr();
     }
-}, 30);
+});
 
 // обработчик движения курсора мыши
 window.onmousemove = function (e) {
@@ -253,6 +264,7 @@ window.onmouseup = function () {
     }
 };
 
+// Очистка поля
 addEvent(document.getElementById('clearCircle'), 'click', function(e){
     e = e || event;
     circleDrive = [];
